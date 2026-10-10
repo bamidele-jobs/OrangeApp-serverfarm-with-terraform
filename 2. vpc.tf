@@ -168,4 +168,4 @@ resource "aws_nat_gateway" "orange-natgw" {
 resource "aws_eip" "orange-eip-2" {
   domain = "vpc"
 }
-
+#provision codes
