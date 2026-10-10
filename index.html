@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orange – track your daily fruit and vitamins</title>
+<meta name="description" content="Log the fruit you eat each day and see how much vitamin C, vitamin A, folate and fibre you've collected.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍊</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBFBF8; --ink:#12301F; --muted:#4F6A58; --orange:#FF7A00; --orange-deep:#D95F00;
+  --tint:#FFE3C2; --pulp:#FFC93C; --leaf:#2F8F46; --line:#DDE6DD; --panel:#FFFFFF;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:1.25rem 1.25rem 3rem}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:.5rem 0 1.5rem}
+.brand{font-family:var(--display);font-weight:800;font-size:1.6rem;letter-spacing:-.02em;color:var(--orange-deep)}
+.date{color:var(--muted);font-size:.95rem}
+h1,h2{font-family:var(--display);letter-spacing:-.02em;line-height:1.08;margin:0}
+h1{font-size:clamp(2.2rem,6vw,3.6rem);font-weight:800}
+h2{font-size:1.3rem;font-weight:800;margin-bottom:.75rem}
+.top{display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:2.5rem;align-items:center;padding-bottom:2.5rem}
+.slice{width:100%;max-width:320px;margin:0 auto}
+.slice svg{width:100%;height:auto;display:block}
+.wedge{fill:var(--tint);stroke:var(--bg);stroke-width:5;transition:fill .35s}
+.wedge.on{fill:var(--orange)}
+.wedge.on.alt{fill:var(--pulp)}
+.rind{fill:none;stroke:var(--orange-deep);stroke-width:9}
+.count{font-family:var(--display);font-weight:800;font-size:2.4rem;fill:var(--ink)}
+.count-sub{font-size:.75rem;fill:var(--muted);font-family:var(--body)}
+.slice.full svg{animation:pop .5s ease-out 1}
+@keyframes pop{50%{transform:scale(1.04)}}
+.msg{font-size:1.15rem;color:var(--muted);margin:1rem 0 0;max-width:34rem}
+.msg strong{color:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.25rem}
+.fruits{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.6rem}
+.fruit{display:flex;flex-direction:column;align-items:flex-start;gap:.1rem;padding:.7rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.fruit:hover{border-color:var(--orange);background:#FFF4E6}
+.fruit:active{background:var(--tint)}
+.fruit .e{font-size:1.6rem;line-height:1}
+.fruit .n{font-weight:700;margin-top:.3rem}
+.fruit .s{font-size:.8rem;color:var(--muted)}
+button:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+.bar{margin-bottom:1rem}
+.bar-top{display:flex;justify-content:space-between;font-size:.95rem;margin-bottom:.3rem}
+.bar-top b{font-weight:700}
+.bar-top span{color:var(--muted)}
+.track{height:12px;background:var(--tint);border-radius:99px;overflow:hidden}
+.fill{height:100%;width:0;background:var(--leaf);border-radius:99px;transition:width .45s ease}
+.fill.met{background:var(--orange)}
+.log{list-style:none;margin:0;padding:0}
+.log li{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.55rem 0;border-bottom:1px solid var(--line)}
+.log li:last-child{border-bottom:0}
+.log button{border:0;background:none;color:var(--muted);font:inherit;font-size:.9rem;cursor:pointer;text-decoration:underline;padding:.2rem}
+.empty{color:var(--muted);margin:0}
+.reset{margin-top:1rem;border:1px solid var(--line);background:none;border-radius:8px;padding:.45rem .8rem;font:inherit;color:var(--muted);cursor:pointer}
+.reset:hover{border-color:var(--ink);color:var(--ink)}
+.note{margin-top:2.5rem;font-size:.85rem;color:var(--muted);max-width:44rem}
+footer{margin-top:1rem;font-size:.85rem;color:var(--muted)}
+@media (max-width:760px){
+  .top{grid-template-columns:1fr;gap:1.25rem}
+  .grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Orange</div>
+    <div class="date" id="date"></div>
+  </header>
+
+  <section class="top">
+    <div class="slice" id="slice">
+      <svg viewBox="0 0 200 200" role="img" aria-label="Orange slice showing today's fruit servings">
+        <g id="wedges"></g>
+        <circle class="rind" cx="100" cy="100" r="95"/>
+        <text class="count" id="count" x="100" y="106" text-anchor="middle">0</text>
+        <text class="count-sub" x="100" y="124" text-anchor="middle">of 3 servings</text>
+      </svg>
+    </div>
+    <div>
+      <h1>Fill your slice with fruit today.</h1>
+      <p class="msg" id="msg" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="addh">
+      <h2 id="addh">What did you eat?</h2>
+      <div class="fruits" id="fruits"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="nutr">
+      <h2 id="nutr">Collected today</h2>
+      <div id="bars"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="logh" style="grid-column:1/-1">
+      <h2 id="logh">Today's log</h2>
+      <ul class="log" id="log"></ul>
+      <p class="empty" id="empty">Nothing logged yet. Tap a fruit above to add your first serving.</p>
+      <button class="reset" id="reset" type="button" hidden>Clear today</button>
+    </section>
+  </div>
+
+  <p class="note">Nutrient figures are approximate values for one typical serving, compared with general adult daily targets. Orange is a habit tracker, not medical or dietary advice.</p>
+  <footer>Orange · A static site hosted on AWS and provisioned with Terraform.</footer>
+</div>
+
+<script>
+(function(){
+  // Approximate nutrients per typical serving: C (mg), A (mcg RAE), folate (mcg), fibre (g)
+  var FRUITS = [
+    {k:"orange",    n:"Orange",     e:"🍊", s:"1 medium", c:70, a:14,  f:40, g:3.1},
+    {k:"apple",     n:"Apple",      e:"🍎", s:"1 medium", c:8,  a:5,   f:5,  g:4.4},
+    {k:"banana",    n:"Banana",     e:"🍌", s:"1 medium", c:10, a:4,   f:24, g:3.1},
+    {k:"strawberry",n:"Strawberries",e:"🍓",s:"1 cup",    c:89, a:1,   f:35, g:3.0},
+    {k:"mango",     n:"Mango",      e:"🥭", s:"1 cup",    c:60, a:90,  f:71, g:2.6},
+    {k:"kiwi",      n:"Kiwi",       e:"🥝", s:"1 fruit",  c:56, a:2,   f:17, g:2.1},
+    {k:"pineapple", n:"Pineapple",  e:"🍍", s:"1 cup",    c:79, a:5,   f:30, g:2.3},
+    {k:"blueberry", n:"Blueberries",e:"🫐", s:"1 cup",    c:14, a:3,   f:9,  g:3.6},
+    {k:"grapes",    n:"Grapes",     e:"🍇", s:"1 cup",    c:5,  a:5,   f:3,  g:1.4},
+    {k:"watermelon",n:"Watermelon", e:"🍉", s:"2 cups",   c:23, a:85,  f:8,  g:1.1},
+    {k:"pear",      n:"Pear",       e:"🍐", s:"1 medium", c:8,  a:2,   f:12, g:5.5},
+    {k:"melon",     n:"Cantaloupe", e:"🍈", s:"1 cup",    c:57, a:270, f:34, g:1.4},
+    {k:"papaya",    n:"Papaya",     e:"🧡", s:"1 cup",    c:88, a:68,  f:53, g:2.5}
+  ];
+  var NUTRIENTS = [
+    {id:"c", name:"Vitamin C",  unit:"mg",  goal:90,  picks:["Strawberries","Kiwi","Orange"]},
+    {id:"a", name:"Vitamin A",  unit:"mcg", goal:900, picks:["Cantaloupe","Mango","Papaya"]},
+    {id:"f", name:"Folate (B9)",unit:"mcg", goal:400, picks:["Mango","Papaya","Strawberries"]},
+    {id:"g", name:"Fibre",      unit:"g",   goal:28,  picks:["Pear","Apple","Blueberries"]}
+  ];
+  var GOAL = 3, WEDGES = 6;
+  var today = new Date();
+  var KEY = "orange:" + today.toISOString().slice(0,10);
+  var log = [];
+
+  function load(){
+    try{ var r = localStorage.getItem(KEY); log = r ? JSON.parse(r) : []; if(!Array.isArray(log)) log = []; }
+    catch(e){ log = []; }
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(log)); }catch(e){} }
+  function byKey(k){ return FRUITS.filter(function(f){return f.k===k;})[0]; }
+  function el(id){ return document.getElementById(id); }
+
+  function buildWedges(){
+    var g = el("wedges"), ns = "http://www.w3.org/2000/svg", r = 92, cx = 100, cy = 100, out = "";
+    for(var i=0;i<WEDGES;i++){
+      var a1 = (i*360/WEDGES - 90) * Math.PI/180, a2 = ((i+1)*360/WEDGES - 90) * Math.PI/180;
+      var x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1), x2 = cx + r*Math.cos(a2), y2 = cy + r*Math.sin(a2);
+      var p = document.createElementNS(ns,"path");
+      p.setAttribute("d","M"+cx+","+cy+" L"+x1.toFixed(2)+","+y1.toFixed(2)+" A"+r+","+r+" 0 0 1 "+x2.toFixed(2)+","+y2.toFixed(2)+" Z");
+      p.setAttribute("class","wedge");
+      g.appendChild(p);
+    }
+  }
+
+  function buildFruits(){
+    var box = el("fruits");
+    FRUITS.forEach(function(f){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "fruit";
+      b.setAttribute("aria-label","Add "+f.n+", "+f.s);
+      var e = document.createElement("span"); e.className="e"; e.textContent=f.e;
+      var n = document.createElement("span"); n.className="n"; n.textContent=f.n;
+      var s = document.createElement("span"); s.className="s"; s.textContent=f.s;
+      b.appendChild(e); b.appendChild(n); b.appendChild(s);
+      b.addEventListener("click", function(){ log.push({id:Date.now()+Math.random(), k:f.k}); save(); render(); });
+      box.appendChild(b);
+    });
+  }
+
+  function totals(){
+    var t = {c:0,a:0,f:0,g:0};
+    log.forEach(function(item){
+      var f = byKey(item.k); if(!f) return;
+      t.c += f.c; t.a += f.a; t.f += f.f; t.g += f.g;
+    });
+    return t;
+  }
+
+  function message(t){
+    var n = log.length, m = el("msg"); m.textContent = "";
+    function add(txt, bold){ var s = document.createElement(bold?"strong":"span"); s.textContent = txt; m.appendChild(s); }
+    var low = NUTRIENTS.slice().sort(function(x,y){ return t[x.id]/x.goal - t[y.id]/y.goal; })[0];
+    var tip = low.name + " is your lowest today. Try " + low.picks[0] + " or " + low.picks[1] + ".";
+    if(n === 0){ add("Your slice is empty. ", true); add("Add your first fruit and Orange starts counting your vitamins."); }
+    else if(n === 1){ add("Good start. ", true); add("One serving in, two more to reach today's goal. " + tip); }
+    else if(n === 2){ add("One more serving to go. ", true); add(tip); }
+    else if(n === 3){ add("Goal reached. ", true); add("Your slice is full. Feeling hungry later? Another serving only helps. " + tip); }
+    else { add("Above and beyond. ", true); add(n + " servings today. Keep this rhythm going tomorrow."); }
+  }
+
+  function render(){
+    var n = log.length, t = totals();
+    var lit = Math.min(WEDGES, Math.round(n * WEDGES / GOAL));
+    Array.prototype.forEach.call(el("wedges").children, function(p,i){
+      p.setAttribute("class","wedge" + (i < lit ? " on" : "") + (i < lit && i % 2 ? " alt" : ""));
+    });
+    el("count").textContent = n;
+    var sl = el("slice");
+    sl.classList.toggle("full", n >= GOAL);
+
+    var bars = el("bars"); bars.textContent = "";
+    NUTRIENTS.forEach(function(nu){
+      var v = t[nu.id], pct = Math.min(100, v / nu.goal * 100);
+      var wrap = document.createElement("div"); wrap.className = "bar";
+      var top = document.createElement("div"); top.className = "bar-top";
+      var b = document.createElement("b"); b.textContent = nu.name;
+      var s = document.createElement("span");
+      var shown = nu.id === "g" ? v.toFixed(1) : Math.round(v);
+      s.textContent = shown + " / " + nu.goal + " " + nu.unit + " (" + Math.round(v / nu.goal * 100) + "%)";
+      top.appendChild(b); top.appendChild(s);
+      var tr = document.createElement("div"); tr.className = "track";
+      tr.setAttribute("role","progressbar"); tr.setAttribute("aria-label", nu.name);
+      tr.setAttribute("aria-valuemin","0"); tr.setAttribute("aria-valuemax","100"); tr.setAttribute("aria-valuenow", Math.round(pct));
+      var fl = document.createElement("div"); fl.className = "fill" + (pct >= 100 ? " met" : "");
+      fl.style.width = pct + "%";
+      tr.appendChild(fl); wrap.appendChild(top); wrap.appendChild(tr); bars.appendChild(wrap);
+    });
+
+    var ul = el("log"); ul.textContent = "";
+    log.forEach(function(item, idx){
+      var f = byKey(item.k); if(!f) return;
+      var li = document.createElement("li");
+      var span = document.createElement("span"); span.textContent = f.e + "  " + f.n + " (" + f.s + ")";
+      var rm = document.createElement("button"); rm.type = "button"; rm.textContent = "Remove";
+      rm.setAttribute("aria-label","Remove " + f.n);
+      rm.addEventListener("click", function(){ log.splice(idx,1); save(); render(); });
+      li.appendChild(span); li.appendChild(rm); ul.appendChild(li);
+    });
+    el("empty").hidden = n > 0;
+    el("reset").hidden = n === 0;
+    message(t);
+  }
+
+  el("reset").addEventListener("click", function(){ log = []; save(); render(); });
+  el("date").textContent = today.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+  load(); buildWedges(); buildFruits(); render();
+})();
+</script>
+</body>
+</html>
